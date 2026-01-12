@@ -1,0 +1,20 @@
+compute_environment: LOCAL_MACHINE
+debug: false
+fsdp_config:
+    auto_wrap_policy: TRANSFORMER_BASED_WRAP
+    fsdp: 'full_shard'
+    transformer_layer_cls_to_wrap: "LLaDAModel,LLaDALlamaBlock,Linear,Embedding"
+    limit_all_gathers: true
+    use_orig_params: true
+    sync_module_states: true
+distributed_type: FSDP
+downcast_bf16: 'no'
+enable_cpu_affinity: false
+main_training_function: main
+mixed_precision: bf16
+rdzv_backend: static
+same_network: true
+tpu_env: []
+tpu_use_cluster: false
+tpu_use_sudo: false
+use_cpu: false

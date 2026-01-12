@@ -1,0 +1,8 @@
+accelerate
+transformers==4.51.3
+datasets==3.1.0
+
+word2number
+antlr4-python3-runtime
+sympy
+latex2sympy2
