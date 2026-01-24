@@ -118,7 +118,10 @@ accelerate launch --num_processes 8 --main_process_ip localhost --config_file co
   --run_dir ./checkpoints \
   --grad_accum 8
 ```
-- Note: The global batch size = num_gpus * grad_accum, keep it equal to 64.
+
+> **Note:** Keep global batch size = `num_gpus` × `grad_accum` = **64**.
+> 
+> Adjust `--grad_accum` based on your GPU count (e.g., 16 GPUs → `--grad_accum 4`).
 
 ### Evaluation
 
