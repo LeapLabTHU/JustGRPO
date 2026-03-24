@@ -26,20 +26,6 @@ def init_dist():
     return torch.device(f"cuda:{local_rank}")
 
 
-def get_tokenizer_path(ckpt_path):
-    if os.path.exists(os.path.join(ckpt_path, "tokenizer_config.json")):
-        return ckpt_path
-    cache_root = os.path.expanduser(
-        "~/.cache/huggingface/hub/models--GSAI-ML--LLaDA-8B-Instruct/snapshots"
-    )
-    if os.path.isdir(cache_root):
-        for snap in sorted(os.listdir(cache_root), reverse=True):
-            p = os.path.join(cache_root, snap)
-            if os.path.exists(os.path.join(p, "tokenizer_config.json")):
-                return p
-    return "GSAI-ML/LLaDA-8B-Instruct"
-
-
 def save_log(args, metrics):
     out_dir = os.path.join(
         args.output,
@@ -253,14 +239,13 @@ def main():
     parser.add_argument("--seed", type=int, default=113)
     args = parser.parse_args()
 
+    if args.batch_size != 1:
+        raise ValueError("JustGRPO evaluation requires --batch_size 1.")
+
     torch.manual_seed(args.seed)
     device = init_dist()
 
-    tokenizer_path = get_tokenizer_path(args.ckpt_path)
-    tokenizer = AutoTokenizer.from_pretrained(tokenizer_path, trust_remote_code=True)
-    tokenizer.pad_token_id = (
-        126336 if args.task in ("humaneval", "mbpp") else 126081
-    )
+    tokenizer = AutoTokenizer.from_pretrained('GSAI-ML/LLaDA-8B-Instruct', trust_remote_code=True)
 
     model = AutoModel.from_pretrained(
         args.ckpt_path, trust_remote_code=True, torch_dtype=torch.bfloat16,
