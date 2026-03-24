@@ -55,7 +55,11 @@ def generate(model, prompt, steps=128, gen_length=128, block_length=128, tempera
         remasking: Remasking strategy. 'low_confidence' or 'random'.
         mask_id: The toke id of [MASK] is 126336.
     '''
-    x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id, dtype=torch.long).to(model.device)
+    assert prompt.shape[0] == 1 or (prompt[0] == prompt).all(), \
+        "generate() requires all prompts in the batch to be identical (use prompt.repeat(n, 1)). " \
+        "Variable-length prompts with mask_id padding are not supported."
+
+    x = torch.full((prompt.shape[0], prompt.shape[1] + gen_length), mask_id, dtype=torch.long).to(prompt.device)
     x[:, :prompt.shape[1]] = prompt.clone()
 
     prompt_index = (x != mask_id)

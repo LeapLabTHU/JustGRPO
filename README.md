@@ -38,17 +38,12 @@
 
 </div>
 
-
 ## 📢 News
 
+
+- **[2026.03]** 🎉 Training code, evaluation scripts, and model checkpoints for MATH-500, HumanEval and MBPP datasets released!
 - **[2026.01]** 📄 Paper available on [arXiv](https://arxiv.org/abs/2601.15165)!
 - **[2026.01]** 🎉 Training code, evaluation scripts, and [model checkpoint](https://huggingface.co/nzl-thu/LLaDA-Instruct-JustGRPO) on GSM8K released!
-
-## 📋 TODO
-
-- [ ] Add support for MATH-500
-- [ ] Add support for coding tasks (HumanEval, MBPP)
-
 
 ## Why JustGRPO?
 
@@ -70,6 +65,13 @@ JustGRPO achieves state-of-the-art performance across reasoning and coding bench
 <div align="center">
   <img src="assets/acc_compare.png" width="90%" alt="Accuracy Comparison"/>
 </div>
+
+| Benchmark | Gen Length 128 | Gen Length 256 | Gen Length 512 |
+|:---:|:---:|:---:|:---:|
+| **GSM8K** | 83.8 | 89.1 | 89.8 |
+| **MATH-500** | 39.0 | 45.1 | 45.2 |
+| **HumanEval** | 37.8 | 49.4 | 48.7 |
+| **MBPP** | 50.6 | 52.4 | 49.0 |
 
 
 ## Simplicity
@@ -108,35 +110,55 @@ pip install -r requirements.txt
 
 ## Usage
 
-We provide training and evaluation code on **GSM8K**.
-The RL-trained model is available at [Huggingface](https://huggingface.co/nzl-thu/LLaDA-Instruct-JustGRPO).
+We provide evaluation and training code for **GSM8K**, **MATH-500**, **HumanEval**, and **MBPP**.
+
+### Evaluation
+
+Model checkpoints:
+- [LLaDA-Instruct-JustGRPO-GSM8K](https://huggingface.co/nzl-thu/LLaDA-Instruct-JustGRPO-GSM8K) (GSM8K)
+- [LLaDA-Instruct-JustGRPO-Math500](https://huggingface.co/nzl-thu/LLaDA-Instruct-JustGRPO-Math500) (MATH-500)
+- [LLaDA-Instruct-JustGRPO-Code](https://huggingface.co/nzl-thu/LLaDA-Instruct-JustGRPO-Code) (HumanEval & MBPP)
+
+```bash
+torchrun --nproc-per-node=8 eval.py \
+  --task gsm8k \  # math500/humaneval/mbpp
+  --ckpt_path /path/to/ckpt \
+  --gen_length 256 --steps 256 --block_length 32
+```
 
 ### Training
 
+**Math (GSM8K / MATH-500):**
+
 ```bash
-accelerate launch --num_processes 8 --main_process_ip localhost --config_file configs/fsdp.yaml train.py \
-  --run_dir ./checkpoints \
+accelerate launch --num_processes 8 --config_file configs/fsdp.yaml train.py \
+  --dataset gsm8k \
+  --grad_accum 8
+```
+
+```bash
+accelerate launch --num_processes 8 --config_file configs/fsdp.yaml train.py \
+  --dataset math \
+  --grad_accum 8
+```
+
+**Code (MBPP / HumanEval):**
+
+Code training uses the **AceCode-Hard** subset, following [ml-diffucoder](https://github.com/apple/ml-diffucoder). You can download the dataset here: [AceCode-Hard (Google Drive)](https://drive.google.com/file/d/1eyxdcLRiEI0Km9ohaGxah0hj53iUWuMA/view?usp=sharing). Place the downloaded file at `datasets/acecode_hard.jsonl`.
+
+```bash
+accelerate launch --num_processes 8 --config_file configs/fsdp.yaml train.py \
+  --dataset code \
+  --code_data_path datasets/acecode_hard.jsonl \
   --grad_accum 8
 ```
 
 > **Note:** Keep global batch size = `num_gpus` × `grad_accum` = **64**.
-> 
-> Adjust `--grad_accum` based on your GPU count (e.g., 16 GPUs → `--grad_accum 4`).
-
-### Evaluation
-
-```bash
-torchrun --standalone --nproc-per-node=8 eval.py \
-  --ckpt_path /path/to/ckpt \
-  --steps 256 \
-  --gen_length 256 \
-  --block_length 32
-```
 
 
 ## Citation
 
-If you find this work useful, please cite:
+If you find this work useful, please consider citing our paper.
 
 ```bibtex
 @article{ni2026flexibility,
@@ -151,8 +173,10 @@ If you find this work useful, please cite:
 
 This project builds upon the following excellent works:
 
+- [LLaDOU](https://github.com/maple-research-lab/LLaDOU)
+- [ml-diffucoder](https://github.com/apple/ml-diffucoder)
+- [ESPO](https://github.com/ML-GSAI/ESPO)
 - [LLaDA](https://github.com/ML-GSAI/LLaDA)
 - [d1](https://github.com/dllm-reasoning/d1)
-- [LLaDOU](https://github.com/maple-research-lab/LLaDOU)
 
-We thank the authors for their open-source contributions to the community.
+We sincerely appreciate the authors for making their work open source.
