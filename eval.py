@@ -27,15 +27,17 @@ def init_dist():
 
 
 def save_log(args, metrics):
+    suffix = "" if args.remasking == "low_confidence" else f"-{args.remasking}"
     out_dir = os.path.join(
         args.output,
-        f"{args.task}-len{args.gen_length}-blk{args.block_length}-step{args.steps}",
+        f"{args.task}-len{args.gen_length}-blk{args.block_length}-step{args.steps}{suffix}",
     )
     os.makedirs(out_dir, exist_ok=True)
     log = {
         "task": args.task, "ckpt_path": args.ckpt_path,
         "steps": args.steps, "gen_length": args.gen_length,
-        "block_length": args.block_length, "seed": args.seed,
+        "block_length": args.block_length, "remasking": args.remasking,
+        "seed": args.seed,
         **metrics,
     }
     with open(os.path.join(out_dir, "evaluation_log.json"), "w") as f:
@@ -94,6 +96,7 @@ def eval_math(model, tokenizer, device, args):
         gen_ids = generate(
             model=model, prompt=prompt_ids, steps=args.steps,
             gen_length=args.gen_length, block_length=args.block_length,
+            remasking=args.remasking,
         )
         responses = tokenizer.batch_decode(
             gen_ids[:, prompt_ids.shape[1]:], skip_special_tokens=True,
@@ -187,9 +190,10 @@ def eval_code(model, tokenizer, device, args):
         task_ids.append("[PAD]")
     task_ids = task_ids[rank::world_size]
 
+    suffix = "" if args.remasking == "low_confidence" else f"-{args.remasking}"
     out_dir = os.path.join(
         args.output,
-        f"{args.task}-len{args.gen_length}-blk{args.block_length}-step{args.steps}",
+        f"{args.task}-len{args.gen_length}-blk{args.block_length}-step{args.steps}{suffix}",
     )
     os.makedirs(out_dir, exist_ok=True)
 
@@ -209,6 +213,7 @@ def eval_code(model, tokenizer, device, args):
         gen_ids = generate(
             model=model, prompt=prompt_ids, steps=args.steps,
             gen_length=args.gen_length, block_length=args.block_length,
+            remasking=args.remasking,
             temperature=0.0,
         )
         completion = tokenizer.batch_decode(
@@ -256,6 +261,7 @@ def main():
     parser.add_argument("--steps", type=int, default=256)
     parser.add_argument("--gen_length", type=int, default=256)
     parser.add_argument("--block_length", type=int, default=32)
+    parser.add_argument("--remasking", type=str, default="low_confidence")
     parser.add_argument("--seed", type=int, default=113)
     args = parser.parse_args()
 
